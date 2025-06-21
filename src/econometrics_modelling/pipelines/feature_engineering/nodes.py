@@ -1,6 +1,16 @@
-import pandas as pd
 import numpy as np
-from statsmodels.nonparametric.smoothers_lowess import lowess
+import pandas as pd
+
+
+def _loess_fallback(values: np.ndarray, frac: float) -> np.ndarray:
+    """Simple LOESS-like smoothing using a centered rolling mean.
+
+    This avoids the heavy ``statsmodels`` dependency in the example code while
+    providing a deterministic transformation for tests.
+    """
+    span = max(1, int(len(values) * frac))
+    series = pd.Series(values)
+    return series.rolling(window=span, min_periods=1, center=True).mean().to_numpy()
 
 def feature_engineering_node(rolled_up_beverage_data: pd.DataFrame, holiday_calendar: pd.DataFrame, params: dict) -> pd.DataFrame:
     """
@@ -31,7 +41,10 @@ def feature_engineering_node(rolled_up_beverage_data: pd.DataFrame, holiday_cale
 
     # 6️⃣ Trend using LOESS smoothing
     loess_frac = params.get('feature_engineering.loess_frac', 0.3)
-    df['trend'] = df.groupby(['ppg_id', 'retailer_id'])['log_total_volume'].transform(lambda x: lowess(x, np.arange(len(x)), frac=loess_frac, return_sorted=False))
+    df['trend'] = (
+        df.groupby(['ppg_id', 'retailer_id'])['log_total_volume']
+        .transform(lambda x: _loess_fallback(x.to_numpy(), loess_frac))
+    )
 
     # 7️⃣ Seasonality placeholder (to be implemented based on param option)
     seasonality_method = params.get('feature_engineering.seasonality_method', 'dummy')
