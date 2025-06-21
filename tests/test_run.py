@@ -13,9 +13,6 @@ from kedro.framework.startup import bootstrap_project
 if importlib.util.find_spec("julia") is None:
     pytest.skip("Julia is not installed", allow_module_level=True)
 
-# The tests below are here for the demonstration purpose
-# and should be replaced with the ones testing the project
-# functionality
 
 class TestKedroRun:
     def test_kedro_run(self):
