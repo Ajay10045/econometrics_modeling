@@ -79,14 +79,10 @@ def prepare_formula_for_MM(params: dict) -> str:
 def mixed_modeling_node(feature_engineered_data: pd.DataFrame, params: dict):
     try:
         from julia.api import Julia
+        Julia(compiled_modules=False)  # 🚨 Must be done BEFORE importing from julia
         from julia import Main
-
-        Julia(compiled_modules=False)
-    except ModuleNotFoundError:  # pragma: no cover - optional dependency
-        logger.warning("Julia not available; skipping mixed modelling step")
-        return pd.DataFrame(
-            columns=["term", "estimate", "stderr", "z_value", "p_value"]
-        )
+    except Exception as e:
+        raise RuntimeError(f"Failed to initialize Julia: {e}")
 
     df = feature_engineered_data.copy()
     formula = params.get("formula") or prepare_formula_for_MM(params)
@@ -99,7 +95,7 @@ def mixed_modeling_node(feature_engineered_data: pd.DataFrame, params: dict):
     df.to_csv(data_path, index=False)
 
     # Load Julia environment and call model
-    Main.include("src/econometrics_modelling/mixed_model.jl")  # or wherever mixed_model_fn is
+    Main.include("src/econometrics_modelling/pipelines/mixed_modelling/mixed_model.jl")  # or wherever mixed_model_fn is
     results = Main.mixed_model_fn(str(data_path), formula)
 
     (
