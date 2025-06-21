@@ -1,0 +1,3 @@
+feature_engineering:
+  loess_frac: 0.3
+  seasonality_method: dummy

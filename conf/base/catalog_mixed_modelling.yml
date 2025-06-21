@@ -1,0 +1,3 @@
+model_coefficients:
+  type: pandas.CSVDataset
+  filepath: data/06_models/model_coefficients.csv
