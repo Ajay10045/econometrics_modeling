@@ -96,7 +96,8 @@ def mixed_modeling_node(feature_engineered_data: pd.DataFrame, params: dict):
 
     # Load Julia environment and call model
     Main.include("src/econometrics_modelling/pipelines/mixed_modelling/mixed_model.jl")  # or wherever mixed_model_fn is
-    results = Main.mixed_model_fn(str(data_path), formula)
+    group_vars = list(params.get("hierarchy_levels", []))
+    results = Main.mixed_model_fn(str(data_path), formula, group_vars)
 
     (
         residuals,

@@ -1,4 +1,13 @@
-import pandas as pd
+import importlib
+import pytest
+
+spec = importlib.util.find_spec("pandas")
+if spec is None:
+    pytest.skip("pandas is not installed", allow_module_level=True)
+try:  # pragma: no cover - optional dependency
+    import pandas as pd
+except Exception as exc:  # pragma: no cover - skip if broken install
+    pytest.skip(f"pandas cannot be imported: {exc}", allow_module_level=True)
 
 from econometrics_modelling.pipelines.mixed_modelling.nodes import (
     prepare_data_for_MM,
