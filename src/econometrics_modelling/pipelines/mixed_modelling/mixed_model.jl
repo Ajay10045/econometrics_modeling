@@ -24,8 +24,8 @@ function mixed_model_fn(data_path::String, formula_str::String)
     #     end
     # end
 
-    println("🧮 Parsing formula string as raw formula expression")
-    fm = eval(Meta.parse(formula_str))  # <-- formula_str must NOT include @formula(...)
+    println("🧮 Parsing formula string as StatsModels formula")
+    fm = eval(Meta.parse("@formula(" * formula_str * ")"))
 
     println("📐 Parsed formula: ", fm)
 
