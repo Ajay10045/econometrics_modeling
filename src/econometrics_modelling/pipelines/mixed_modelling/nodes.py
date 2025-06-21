@@ -1,13 +1,8 @@
 import logging
 from collections.abc import Iterable
-import pandas as pd
 from pathlib import Path
 
-from julia.api import Julia
-jl = Julia(compiled_modules=False)
-
-from julia import Main
-
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +77,17 @@ def prepare_formula_for_MM(params: dict) -> str:
 
 
 def mixed_modeling_node(feature_engineered_data: pd.DataFrame, params: dict):
+    try:
+        from julia.api import Julia
+        from julia import Main
+
+        Julia(compiled_modules=False)
+    except ModuleNotFoundError:  # pragma: no cover - optional dependency
+        logger.warning("Julia not available; skipping mixed modelling step")
+        return pd.DataFrame(
+            columns=["term", "estimate", "stderr", "z_value", "p_value"]
+        )
+
     df = feature_engineered_data.copy()
     formula = params.get("formula") or prepare_formula_for_MM(params)
 
