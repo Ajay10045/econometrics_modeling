@@ -10,22 +10,28 @@ using CategoricalArrays
 Fits a mixed effects model using `MixedModels.jl` given a CSV path, a formula string, 
 and a list of grouping variables (to be treated as categorical). Returns model components.
 """
-function mixed_model_fn(data_path::String, formula_str::String)
+function mixed_model_fn(
+    data_path::String,
+    formula_str::String,
+    group_vars::Vector{String} = String[],
+)
 
     println("🔍 Reading data from: ", data_path)
     df = CSV.read(data_path, DataFrame)
 
-    # println("📊 Converting grouping variables to categorical: ", group_vars)
-    # for col in group_vars
-    #     if col in names(df)
-    #         df[!, col] = CategoricalArray(df[!, col])
-    #     else
-    #         error("❌ Column $(col) not found in dataset.")
-    #     end
-    # end
+    if !isempty(group_vars)
+        println("📊 Converting grouping variables to categorical: ", group_vars)
+        for col in group_vars
+            if col in names(df)
+                df[!, col] = CategoricalArray(df[!, col])
+            else
+                error("❌ Column $(col) not found in dataset.")
+            end
+        end
+    end
 
-    println("🧮 Parsing formula string as raw formula expression")
-    fm = eval(Meta.parse(formula_str))  # <-- formula_str must NOT include @formula(...)
+    println("🧮 Parsing formula string as StatsModels formula")
+    fm = eval(Meta.parse("@formula(" * formula_str * ")"))
 
     println("📐 Parsed formula: ", fm)
 

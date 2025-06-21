@@ -4,9 +4,17 @@ Tests should be placed in ``src/tests``, in modules that mirror your
 project's structure, and in files named test_*.py.
 """
 from pathlib import Path
+import importlib
+import pytest
 
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
+
+if importlib.util.find_spec("julia") is None:
+    pytest.skip("Julia is not installed", allow_module_level=True)
+
+if importlib.util.find_spec("kedro") is None:
+    pytest.skip("Kedro is not installed", allow_module_level=True)
 
 # The tests below are here for the demonstration purpose
 # and should be replaced with the ones testing the project
