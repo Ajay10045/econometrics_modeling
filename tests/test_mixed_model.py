@@ -1,6 +1,9 @@
 import pandas as pd
 
-from econometrics_modelling.mixed_model import prepare_data_for_MM, prepare_formula_for_MM
+from econometrics_modelling.pipelines.mixed_modelling.nodes import (
+    prepare_data_for_MM,
+    prepare_formula_for_MM,
+)
 
 
 def test_prepare_data_for_MM_adds_dummy():
