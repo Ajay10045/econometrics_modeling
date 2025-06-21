@@ -17,20 +17,20 @@ mixed_modeling:
     fixed_effects:
       interactions:
         - measure: log_avg_price
-          with_level: brand
+          with_level: ppg_id
         - measure: log_promo_acv_tpr
           with_level: retailer_id
     random_effects:
       uncorrelated:
         intercepts:
-          - brand
+          - ppg_id
           - retailer_id
         slopes:
           - measure: log_avg_price
-            by_level: brand
+            by_level: ppg_id
           - measure: log_promo_acv_tpr
             by_level: retailer_id
       correlated:
         - measure: trend
-          by_level: brand
+          by_level: ppg_id
           with_intercept: true

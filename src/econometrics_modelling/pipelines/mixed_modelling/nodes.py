@@ -1,8 +1,13 @@
 import logging
 from collections.abc import Iterable
-
 import pandas as pd
-import statsmodels.formula.api as smf
+from pathlib import Path
+
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
+
+from julia import Main
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,37 +81,42 @@ def prepare_formula_for_MM(params: dict) -> str:
     return f"{target} ~ {re}"
 
 
-def mixed_modeling_node(feature_engineered_data: pd.DataFrame, params: dict) -> pd.DataFrame:
-    """Fit a mixed effects model and return coefficient estimates."""
-
+def mixed_modeling_node(feature_engineered_data: pd.DataFrame, params: dict):
     df = feature_engineered_data.copy()
-    formula = params.get("formula")
-    if not formula:
-        formula = prepare_formula_for_MM(params)
-
-    hierarchy = params.get("hierarchy_levels", [params.get("group_column", "ppg")])
-    group_col = params.get("group_column", hierarchy[-1])
-    re_formula = params.get("re_formula", "1")
-    vc_formula = params.get("vc_formula", {"retailer": "0 + C(retailer_id)"})
-
-    grouping_columns = hierarchy
-    df = prepare_data_for_MM(df, grouping_columns, group_col)
+    formula = params.get("formula") or prepare_formula_for_MM(params)
 
     logger.info("Model formula: %s", formula)
-    try:
-        model = smf.mixedlm(
-            formula=formula,
-            data=df,
-            groups=df[group_col],
-            re_formula=re_formula,
-            vc_formula=vc_formula,
-        )
-        result = model.fit()
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Model fitting failed: %s", exc)
-        return pd.DataFrame(columns=["term", "estimate"])
 
-    coef = pd.DataFrame(result.params, columns=["estimate"])
-    coef.index.name = "term"
-    return coef.reset_index()
+    # Save to temp file
+    data_path = Path("data/08_model_input/feature_data.csv")
+    data_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(data_path, index=False)
 
+    # Load Julia environment and call model
+    Main.include("src/econometrics_modelling/mixed_model.jl")  # or wherever mixed_model_fn is
+    results = Main.mixed_model_fn(str(data_path), formula)
+
+    (
+        residuals,
+        pred,
+        rand_eff,
+        effect,
+        estimate,
+        stderr,
+        z_value,
+        p_value,
+        var,
+        dof,
+    ) = results
+
+    df["pred"] = pred
+    df["resid"] = residuals
+
+    results_df = df.copy()
+    results_df = results_df[results_df[params["hierarchy_levels"][-1]] != "dummy"].reset_index(drop=True)
+
+    fixed_dt = pd.DataFrame(
+        zip(effect, estimate, stderr, z_value, p_value),
+        columns=["term", "estimate", "stderr", "z_value", "p_value"]
+    )
+    return fixed_dt
