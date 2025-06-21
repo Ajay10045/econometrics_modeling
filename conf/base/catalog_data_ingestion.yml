@@ -1,0 +1,11 @@
+raw_beverage_data:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/raw_beverage_data.csv
+
+product_master_data:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/product_master_data.csv
+
+holiday_calendar:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/holiday_calendar.csv

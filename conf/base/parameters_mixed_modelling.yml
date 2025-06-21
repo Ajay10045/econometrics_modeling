@@ -1,0 +1,8 @@
+mixed_modeling:
+  formula: >
+    log_total_volume ~ log_avg_price*C(retailer_id) + log_avg_price*C(ppg_id)
+    + log_cpi*C(ppg_id) + trend*C(brand) + log_promo_acv_tpr*C(retailer_id)
+  group_column: ppg_id
+  re_formula: 1 + log_promo_acv_tpr
+  vc_formula:
+    retailer: 0 + C(retailer_id)
