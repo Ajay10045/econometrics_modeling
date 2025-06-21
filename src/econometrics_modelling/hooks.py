@@ -1,6 +1,13 @@
 from kedro.framework.hooks import hook_impl
-from pyspark import SparkConf
-from pyspark.sql import SparkSession
+try:  # pragma: no cover - optional dependency
+    from pyspark import SparkConf
+    from pyspark.sql import SparkSession
+except Exception:  # pragma: no cover - optional dependency
+    SparkConf = None
+    SparkSession = None
+    import logging
+
+    logging.getLogger(__name__).warning("pyspark not available; SparkHooks disabled")
 
 
 class SparkHooks:
@@ -9,6 +16,8 @@ class SparkHooks:
         """Initialises a SparkSession using the config
         defined in project's conf folder.
         """
+        if SparkConf is None or SparkSession is None:  # pragma: no cover - optional dependency
+            return
 
         # Load the spark configuration in spark.yaml using the config loader
         parameters = context.config_loader["spark"]
